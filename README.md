@@ -1,6 +1,6 @@
 # STAR Interview Answer Generator
 
-A sophisticated AI agent system built with Google's Agent Development Kit (ADK) that generates and refines STAR format interview answers through multi-agent workflows.
+An AI agent system built with Google's Agent Development Kit (ADK) that generates and refines STAR format interview answers through multi-agent workflows.
 
 ## Architecture
 
@@ -57,29 +57,7 @@ User → FastAPI Backend → ADK Agent → Subagents → Iterative Refinement �
 - `pyproject.toml` - Poetry deps + scripts (`fast-local`, `fast-remote`)
 
 ## Deployment Options
-
-### Local Development
-```bash
-# Terminal 1: Agent
-poetry run python app.py
-
-# Terminal 2: Backend  
-poetry run fast-local
-```
-Set `AGENT_LOCATION=local` in `.env`
-
-### Cloud Run
-```bash
-# Deploy agent
-gcloud run deploy star-agent-service --source . --region us-central1
-
-# Update .env
-AGENT_LOCATION=cloud_run
-AGENT_CLOUD_RUN_URL=https://your-service-url.run.app
-
-# Run backend locally
-poetry run fast-local
-```
+See project_setup.md for setup and deployment steps.
 
 ## Features
 
@@ -95,8 +73,7 @@ poetry run fast-local
 1. **Setup**: Follow [project_setup.md](project_setup.md) for complete configuration
 2. **Install**: `poetry install`
 3. **Configure**: Copy `.env.example` to `.env` and update values
-4. **Run**: See deployment options above
-5. **Access**: http://localhost:5005/login
+4. **Access**: http://localhost:5005/login
 
 ## Monitoring
 
