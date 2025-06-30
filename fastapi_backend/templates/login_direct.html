@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAR Answer Generator - Login</title>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f8fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            text-align: left;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+            width: 80px;
+            height: 80px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+
+        .description {
+            margin-bottom: 30px;
+            color: #5a6a7e;
+            font-size: 1rem;
+        }
+
+        .feature-list {
+            margin: 25px 0;
+            padding-left: 20px;
+        }
+
+        .feature-list li {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #e1e8ed;
+            margin: 30px 0;
+            width: 100%;
+        }
+
+        .login-section h2 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .login-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            width: fit-content;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .login-button:hover {
+            background-color: #c0392b;
+        }
+
+        .login-button img {
+            margin-right: 10px;
+            height: 18px;
+        }
+
+        .error-message {
+            color: #d93025;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #fce8e6;
+            display: none;
+        }
+        
+        .status-message {
+            color: #1a73e8;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #e8f0fe;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 19H22L12 2Z" fill="#3498db" />
+        </svg>
+
+        <h1>Welcome to STAR Answer Generator</h1>
+        <p class="description">
+            Your comprehensive tool for generating high-quality STAR format answers for interview questions.
+        </p>
+
+        <p>Streamline your interview preparation with our advanced tool for:</p>
+        <ul class="feature-list">
+            <li>Professional STAR format answers tailored to your role</li>
+            <li>Intelligent refinement with multiple iterations</li>
+            <li>Detailed feedback and ratings</li>
+            <li>Session history management</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <div class="login-section">
+            <h2>Please log in to continue</h2>
+            
+            <button id="googleLoginButton" class="login-button">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                Login with Google Account
+            </button>
+            
+            <div id="spinner" class="spinner"></div>
+            <p id="statusMessage" class="status-message">Initializing...</p>
+            <p id="errorMessage" class="error-message">Error details will appear here</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase with server-provided config
+        const firebaseConfigJSON = '{{ firebase_config|tojson|safe }}';
+        let firebaseConfig; 
+        try {
+            firebaseConfig = JSON.parse(firebaseConfigJSON);
+        } catch (e) {
+            console.error("Failed to parse Firebase config:", e);
+            showError("Firebase configuration error. Please contact support.");
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page loaded - starting auth flow");
+            
+            // Check Firebase config
+            if (!firebaseConfig || !firebaseConfig.apiKey) {
+                showError("Firebase configuration is missing");
+                return;
+            }
+
+            try {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                
+                // Setup Google sign-in button
+                document.getElementById('googleLoginButton').addEventListener('click', function() {
+                    showStatus("Starting Google sign-in...");
+                    showSpinner(true);
+                    
+                    // Create Google auth provider with default settings
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.addScope('profile');
+                    provider.addScope('email');
+                    
+                    // Try popup auth first
+                    firebase.auth().signInWithPopup(provider)
+                        .then(handleAuthSuccess)
+                        .catch(function(error) {
+                            console.error("Popup auth error:", error);
+                            showStatus("Popup failed, trying redirect...");
+                            
+                            // Fall back to redirect method
+                            firebase.auth().signInWithRedirect(provider);
+                        });
+                });
+                
+                // Check if we're returning from a redirect
+                firebase.auth().getRedirectResult()
+                    .then(function(result) {
+                        if (result && result.user) {
+                            handleAuthSuccess(result);
+                        } else {
+                            // Check if already signed in
+                            const user = firebase.auth().currentUser;
+                            if (user) {
+                                handleAuthSuccess({ user: user });
+                            } else {
+                                showStatus("Please sign in");
+                                showSpinner(false);
+                            }
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error("Redirect error:", error);
+                        showError("Error: " + error.message);
+                        showSpinner(false);
+                    });
+                
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showError("Initialization error: " + error.message);
+            }
+        });
+        
+        // Handle successful authentication
+        function handleAuthSuccess(result) {
+            const user = result.user;
+            showStatus("Signed in as " + user.email + ", creating session...");
+            
+            // Get ID token and send to backend
+            user.getIdToken(true)
+                .then(function(idToken) {
+                    return fetch('/auth/session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken }),
+                        credentials: 'same-origin'
+                    });
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        showStatus("Session created! Redirecting...");
+                        window.location.href = '/';
+                    } else {
+                        throw new Error("Server error: " + response.status);
+                    }
+                })
+                .catch(function(error) {
+                    console.error("Session error:", error);
+                    showError("Session error: " + error.message);
+                    showSpinner(false);
+                });
+        }
+        
+        // Helper functions
+        function showStatus(message) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function showSpinner(show) {
+            document.getElementById('spinner').style.display = show ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

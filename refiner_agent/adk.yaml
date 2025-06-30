@@ -1,0 +1,3 @@
+app_name: refiner_agent
+root_agent_id: refiner_agent
+agents_dir: . # Tells ADK to look for agents in the current directory (refiner_agent/)

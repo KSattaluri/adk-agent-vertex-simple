@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAR Answer History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f8fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #logoutButton {
+            background-color: #e74c3c;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        #logoutButton:hover {
+            background-color: #c0392b;
+        }
+
+        #homeButton {
+            background-color: #2ecc71;
+        }
+
+        #homeButton:hover {
+            background-color: #27ae60;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        #spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1.5s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .history-list {
+            margin-top: 20px;
+        }
+
+        .history-item {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #3498db;
+            transition: transform 0.2s;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .history-meta {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .history-content {
+            margin-top: 10px;
+        }
+
+        .history-rating {
+            display: inline-block;
+            background-color: #f39c12;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .history-badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #ecf0f1;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #34495e;
+        }
+
+        .star-answer {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .star-answer h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .star-component {
+            margin-bottom: 15px;
+        }
+        
+        .star-component label {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .history-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .action-button {
+            background-color: transparent;
+            color: #3498db;
+            border: 1px solid #3498db;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .action-button:hover {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .view-button {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .empty-state img {
+            width: 100px;
+            height: 100px;
+            opacity: 0.4;
+            margin-bottom: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+
+        .pagination button {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pagination button.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .pagination button:hover {
+            background-color: #bdc3c7;
+        }
+
+        .pagination button:disabled {
+            background-color: #f5f5f5;
+            color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-star-answer {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .formatted-date {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-nav">
+            <h1>Your STAR Answer History</h1>
+            <div class="nav-buttons">
+                <a href="/" style="text-decoration: none;"><button id="homeButton">Home</button></a>
+                <a href="/logout" style="text-decoration: none;"><button id="logoutButton">Logout</button></a>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="loading" id="loading">
+            <div id="spinner"></div>
+            <p>Loading your response history...</p>
+        </div>
+        
+        <div class="history-list" id="historyList">
+            <!-- History items will be loaded here -->
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination controls will be added here -->
+        </div>
+    </div>
+
+    <!-- Modal for detailed view -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">STAR Answer Details</h2>
+            <div id="modalContent">
+                <!-- Response details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button id="closeModalButton">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const historyList = document.getElementById('historyList');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const pagination = document.getElementById('pagination');
+            const modal = document.getElementById('detailModal');
+            const modalContent = document.getElementById('modalContent');
+            const modalTitle = document.getElementById('modalTitle');
+            const closeModal = document.getElementsByClassName('close')[0];
+            const closeModalButton = document.getElementById('closeModalButton');
+            
+            // Pagination settings
+            const itemsPerPage = 10;
+            let currentPage = 1;
+            let allResponses = [];
+            
+            // Close modal when clicking the x button
+            closeModal.onclick = function() {
+                modal.style.display = 'none';
+            };
+            
+            // Close modal when clicking the close button
+            closeModalButton.onclick = function() {
+                modal.style.display = 'none';
+            };
+            
+            // Close modal when clicking outside the modal
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            // Load history data
+            loadHistory();
+            
+            function loadHistory() {
+                // Clear previous results and errors
+                errorMessage.style.display = 'none';
+                historyList.innerHTML = '';
+                
+                // Show loading spinner
+                loading.style.display = 'flex';
+                
+                // Fetch history from API
+                fetch('/api/history')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Hide loading spinner
+                        loading.style.display = 'none';
+                        
+                        // Store all responses
+                        allResponses = data;
+                        
+                        // Display empty state if no responses
+                        if (data.length === 0) {
+                            displayEmptyState();
+                            return;
+                        }
+                        
+                        // Set up pagination
+                        setupPagination(data.length);
+                        
+                        // Display current page
+                        displayPage(currentPage);
+                    })
+                    .catch(error => {
+                        loading.style.display = 'none';
+                        showError('Error loading history: ' + error.message);
+                    });
+            }
+            
+            function displayEmptyState() {
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 64px; margin-bottom: 20px;">📝</div>
+                        <h3>No STAR Answers Yet</h3>
+                        <p>Generate your first STAR answer to see it here.</p>
+                        <p><a href="/" style="color: #3498db; text-decoration: none;">Go to Generator</a></p>
+                    </div>
+                `;
+            }
+            
+            function setupPagination(totalItems) {
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                // Don't show pagination if only one page
+                if (totalPages <= 1) {
+                    pagination.style.display = 'none';
+                    return;
+                }
+                
+                pagination.style.display = 'flex';
+                pagination.innerHTML = '';
+                
+                // Previous button
+                const prevButton = document.createElement('button');
+                prevButton.innerHTML = '&laquo;';
+                prevButton.disabled = currentPage === 1;
+                prevButton.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        displayPage(currentPage);
+                        updatePaginationButtons();
+                    }
+                });
+                pagination.appendChild(prevButton);
+                
+                // Page buttons
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.classList.toggle('active', i === currentPage);
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        displayPage(currentPage);
+                        updatePaginationButtons();
+                    });
+                    pagination.appendChild(pageButton);
+                }
+                
+                // Next button
+                const nextButton = document.createElement('button');
+                nextButton.innerHTML = '&raquo;';
+                nextButton.disabled = currentPage === totalPages;
+                nextButton.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        displayPage(currentPage);
+                        updatePaginationButtons();
+                    }
+                });
+                pagination.appendChild(nextButton);
+            }
+            
+            function updatePaginationButtons() {
+                const buttons = pagination.querySelectorAll('button');
+                const totalPages = Math.ceil(allResponses.length / itemsPerPage);
+                
+                // Update previous button
+                buttons[0].disabled = currentPage === 1;
+                
+                // Update page buttons
+                for (let i = 1; i < buttons.length - 1; i++) {
+                    buttons[i].classList.toggle('active', i === currentPage);
+                }
+                
+                // Update next button
+                buttons[buttons.length - 1].disabled = currentPage === totalPages;
+            }
+            
+            function displayPage(page) {
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, allResponses.length);
+                const pageItems = allResponses.slice(startIndex, endIndex);
+                
+                historyList.innerHTML = '';
+                
+                pageItems.forEach(response => {
+                    const historyItem = createHistoryItem(response);
+                    historyList.appendChild(historyItem);
+                });
+            }
+            
+            function createHistoryItem(response) {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                
+                // Handle date formatting properly
+                let dateDisplay = 'Added recently';
+                if (response.createdAt) {
+                    try {
+                        let date;
+                        if (response.createdAt.seconds) {
+                            // Firestore timestamp format
+                            date = new Date(response.createdAt.seconds * 1000);
+                        } else if (typeof response.createdAt === 'string') {
+                            // ISO string format
+                            date = new Date(response.createdAt);
+                        } else if (response.createdAt instanceof Date) {
+                            date = response.createdAt;
+                        }
+                        
+                        if (date && !isNaN(date.getTime())) {
+                            dateDisplay = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
+                        }
+                    } catch (e) {
+                        console.log('Date parsing error:', e);
+                    }
+                }
+                
+                // Log the response structure for debugging
+                console.log('History item response keys:', Object.keys(response));
+                console.log('Date value:', response.createdAt);
+                
+                // Extract data using consistent finalResponse structure
+                let starAnswer = {};
+                let rating = 0;
+                let iterations = [];
+                
+                try {
+                    // Use finalResponse.iterations structure (the standard structure)
+                    if (response.finalResponse && response.finalResponse.iterations && response.finalResponse.iterations.length > 0) {
+                        console.log('Using finalResponse.iterations structure');
+                        iterations = response.finalResponse.iterations;
+                        
+                        // Get the best (highest rated) iteration for main display
+                        const bestIteration = iterations.reduce((best, current) => {
+                            const bestRating = best.critique?.rating || 0;
+                            const currentRating = current.critique?.rating || 0;
+                            return currentRating > bestRating ? current : best;
+                        });
+                        
+                        starAnswer = bestIteration.starAnswer || {};
+                        rating = bestIteration.critique?.rating || 0;
+                    }
+                    // Fallback to direct fields if finalResponse structure is not available
+                    else if (response.starAnswer) {
+                        console.log('Using direct starAnswer field');
+                        starAnswer = response.starAnswer;
+                        rating = response.rating || 0;
+                        iterations = response.history || [];
+                    }
+                    else {
+                        console.log('No valid data structure found');
+                        starAnswer = {};
+                        rating = 0;
+                        iterations = [];
+                    }
+                } catch (error) {
+                    console.error('Error extracting response data:', error);
+                    starAnswer = {};
+                    rating = 0;
+                    iterations = [];
+                }
+                
+                // Ensure starAnswer has all required fields
+                const defaultStarAnswer = {
+                    situation: 'Not available',
+                    task: 'Not available', 
+                    action: 'Not available',
+                    result: 'Not available'
+                };
+                
+                starAnswer = { ...defaultStarAnswer, ...starAnswer };
+                
+                console.log('Final starAnswer:', starAnswer);
+                console.log('Final rating:', rating);
+                console.log('Final iterations count:', iterations.length);
+                console.log('Final iterations:', iterations);
+                
+                // Create the item HTML
+                item.innerHTML = `
+                    <div class="history-header">
+                        <div class="history-title">
+                            ${response.question || 'Untitled Response'}
+                            ${rating ? `<span class="history-rating">${parseFloat(rating).toFixed(1)}</span>` : ''}
+                        </div>
+                        <div class="history-meta">
+                            <span class="formatted-date">${dateDisplay}</span>
+                        </div>
+                    </div>
+                    <div class="history-content">
+                        <div class="history-badges">
+                            <span class="badge">${response.role || 'No role'}</span>
+                            <span class="badge">${response.industry || 'No industry'}</span>
+                        </div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="action-button view-button" data-id="${response.id || response.responseId}">View Details</button>
+                        <button class="action-button" data-id="${response.id || response.responseId}" data-action="reuse">Reuse Template</button>
+                    </div>
+                `;
+                
+                // Add event listener to view button
+                const viewButton = item.querySelector('.view-button');
+                viewButton.addEventListener('click', () => {
+                    showResponseDetails(response.id || response.responseId);
+                });
+                
+                // Add event listener to reuse button
+                const reuseButton = item.querySelector('[data-action="reuse"]');
+                reuseButton.addEventListener('click', () => {
+                    // Redirect to generator page with prefilled data
+                    window.location.href = `/?role=${encodeURIComponent(response.role || '')}&industry=${encodeURIComponent(response.industry || '')}&question=${encodeURIComponent(response.question || '')}`;
+                });
+                
+                return item;
+            }
+            
+            function showResponseDetails(responseId) {
+                // Show loading in modal
+                modalContent.innerHTML = '<div class="loading"><div id="modalSpinner"></div><p>Loading response details...</p></div>';
+                modal.style.display = 'block';
+                
+                // Always fetch from API to get complete details including iteration history
+                console.log('Fetching response details for ID:', responseId);
+                fetch(`/api/responses/${responseId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Response not found or access denied');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('API response received:', data);
+                        console.log('API response keys:', Object.keys(data));
+                        
+                        // Check if finalResponse exists in the API response
+                        if (data.finalResponse) {
+                            console.log('finalResponse found in API response');
+                            console.log('finalResponse keys:', Object.keys(data.finalResponse));
+                            if (data.finalResponse.iterations) {
+                                console.log('iterations found in finalResponse:', data.finalResponse.iterations.length);
+                            }
+                        } else {
+                            console.log('finalResponse NOT found in API response');
+                        }
+                        
+                        displayResponseInModal(data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching response details:', error);
+                        modalContent.innerHTML = `<div class="error-message" style="display: block;">Error: ${error.message}</div>`;
+                    });
+            }
+            
+            function displayResponseInModal(response) {
+                // Set modal title
+                modalTitle.textContent = response.question || 'STAR Answer Details';
+                
+                // Handle date formatting properly
+                let dateDisplay = 'Added recently';
+                if (response.createdAt) {
+                    try {
+                        let date;
+                        if (response.createdAt.seconds) {
+                            // Firestore timestamp format
+                            date = new Date(response.createdAt.seconds * 1000);
+                        } else if (typeof response.createdAt === 'string') {
+                            // ISO string format
+                            date = new Date(response.createdAt);
+                        } else if (response.createdAt instanceof Date) {
+                            date = response.createdAt;
+                        }
+                        
+                        if (date && !isNaN(date.getTime())) {
+                            dateDisplay = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
+                        }
+                    } catch (e) {
+                        console.log('Date parsing error:', e);
+                    }
+                }
+                
+                // Extract data from finalResponse.iterations structure (matching Firebase schema)
+                let starAnswer = {};
+                let rating = 0;
+                let iterations = [];
+                
+                if (response.finalResponse && response.finalResponse.iterations && response.finalResponse.iterations.length > 0) {
+                    // Use finalResponse.iterations structure (the correct structure from Firebase)
+                    iterations = response.finalResponse.iterations;
+                    
+                    // Get the best (highest rated) iteration for main display
+                    const bestIteration = iterations.reduce((best, current) => {
+                        const bestRating = best.critique?.rating || 0;
+                        const currentRating = current.critique?.rating || 0;
+                        return currentRating > bestRating ? current : best;
+                    });
+                    
+                    starAnswer = bestIteration.starAnswer || {};
+                    rating = bestIteration.critique?.rating || 0;
+                } else {
+                    // Fallback to direct fields if finalResponse structure is not available
+                    starAnswer = response.starAnswer || {};
+                    rating = response.rating || 0;
+                    iterations = response.history || [];
+                }
+                
+                // Ensure starAnswer has all required fields
+                const defaultStarAnswer = {
+                    situation: 'Not available',
+                    task: 'Not available', 
+                    action: 'Not available',
+                    result: 'Not available'
+                };
+                
+                starAnswer = { ...defaultStarAnswer, ...starAnswer };
+                
+                // Create modal content
+                let modalHTML = `
+                    <div class="history-meta">
+                        <p><strong>Role:</strong> ${response.role || 'Not specified'}</p>
+                        <p><strong>Industry:</strong> ${response.industry || 'Not specified'}</p>
+                        <p><strong>Created:</strong> <span class="formatted-date">${dateDisplay}</span></p>
+                        ${rating ? `<p><strong>Rating:</strong> ${parseFloat(rating).toFixed(1)}/5.0</p>` : ''}
+                    </div>
+                    
+                    <div class="modal-star-answer">
+                        <h3>STAR Response</h3>
+                        <div class="star-component">
+                            <label>Situation:</label>
+                            <p>${starAnswer.situation}</p>
+                        </div>
+                        <div class="star-component">
+                            <label>Task:</label>
+                            <p>${starAnswer.task}</p>
+                        </div>
+                        <div class="star-component">
+                            <label>Action:</label>
+                            <p>${starAnswer.action}</p>
+                        </div>
+                        <div class="star-component">
+                            <label>Result:</label>
+                            <p>${starAnswer.result}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Add iteration history if available
+                if (iterations && iterations.length > 0) {
+                    modalHTML += `
+                        <h3>Refinement History (${iterations.length} iteration${iterations.length > 1 ? 's' : ''})</h3>
+                        <div class="iterations-list">
+                    `;
+                    
+                    // Sort iterations by iteration number
+                    const sortedIterations = [...iterations].sort((a, b) => {
+                        const aNum = a.iterationNumber || a.iteration || 0;
+                        const bNum = b.iterationNumber || b.iteration || 0;
+                        return aNum - bNum;
+                    });
+                    
+                    sortedIterations.forEach((iteration) => {
+                        const iterationNum = iteration.iterationNumber || iteration.iteration || 1;
+                        const critique = iteration.critique || {};
+                        const iterationStarAnswer = iteration.starAnswer || {};
+                        const iterationRating = critique.rating || 'N/A';
+                        
+                        modalHTML += `
+                            <div class="history-item" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+                                <div class="history-header" style="margin-bottom: 10px;">
+                                    <div class="history-title" style="font-weight: bold; font-size: 16px;">Iteration ${iterationNum}</div>
+                                    <div class="history-rating" style="background: #3498db; color: white; padding: 2px 8px; border-radius: 3px;">${iterationRating}/5.0</div>
+                                </div>
+                                
+                                <div class="iteration-star-answer" style="margin-bottom: 15px;">
+                                    <h4 style="margin-bottom: 10px; color: #2c3e50;">STAR Response:</h4>
+                                    <div style="margin-left: 10px;">
+                                        <div style="margin-bottom: 8px;"><strong>Situation:</strong> ${iterationStarAnswer.situation || 'Not available'}</div>
+                                        <div style="margin-bottom: 8px;"><strong>Task:</strong> ${iterationStarAnswer.task || 'Not available'}</div>
+                                        <div style="margin-bottom: 8px;"><strong>Action:</strong> ${iterationStarAnswer.action || 'Not available'}</div>
+                                        <div style="margin-bottom: 8px;"><strong>Result:</strong> ${iterationStarAnswer.result || 'Not available'}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="iteration-critique">
+                                    <h4 style="margin-bottom: 10px; color: #2c3e50;">Critique Details:</h4>
+                                    <div style="margin-left: 10px;">
+                        `;
+                        
+                        // Add detailed feedback using consistent camelCase field names
+                        if (critique.structureFeedback) {
+                            modalHTML += `<div style="margin-bottom: 8px;"><strong>Structure:</strong> ${critique.structureFeedback}</div>`;
+                        }
+                        
+                        if (critique.relevanceFeedback) {
+                            modalHTML += `<div style="margin-bottom: 8px;"><strong>Relevance:</strong> ${critique.relevanceFeedback}</div>`;
+                        }
+                        
+                        if (critique.specificityFeedback) {
+                            modalHTML += `<div style="margin-bottom: 8px;"><strong>Specificity:</strong> ${critique.specificityFeedback}</div>`;
+                        }
+                        
+                        if (critique.professionalImpactFeedback) {
+                            modalHTML += `<div style="margin-bottom: 8px;"><strong>Professional Impact:</strong> ${critique.professionalImpactFeedback}</div>`;
+                        }
+                        
+                        // Add overall feedback if available
+                        if (critique.feedback) {
+                            modalHTML += `<div style="margin-bottom: 8px;"><strong>Overall Feedback:</strong> ${critique.feedback}</div>`;
+                        }
+                        
+                        // Add suggestions if available
+                        if (critique.suggestions && critique.suggestions.length > 0) {
+                            modalHTML += `<div style="margin-bottom: 8px;"><strong>Suggestions:</strong><ul style="margin-left: 20px;">`;
+                            critique.suggestions.forEach(suggestion => {
+                                modalHTML += `<li>${suggestion}</li>`;
+                            });
+                            modalHTML += `</ul></div>`;
+                        }
+                        
+                        // Add raw critique text if available
+                        if (critique.rawCritiqueText) {
+                            modalHTML += `<div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 3px; font-size: 12px;"><strong>Raw Critique:</strong><br><pre style="white-space: pre-wrap; font-family: monospace;">${critique.rawCritiqueText}</pre></div>`;
+                        }
+                        
+                        // Add timestamp if available
+                        if (iteration.timestamp) {
+                            try {
+                                const timestamp = new Date(iteration.timestamp);
+                                if (!isNaN(timestamp.getTime())) {
+                                    modalHTML += `<div style="margin-top: 10px; font-size: 12px; color: #666;"><strong>Generated:</strong> ${timestamp.toLocaleString()}</div>`;
+                                }
+                            } catch (e) {
+                                console.log('Error parsing iteration timestamp:', e);
+                            }
+                        }
+                        
+                        modalHTML += `
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    modalHTML += `</div>`;
+                } else {
+                    modalHTML += `<p><em>No iteration history available.</em></p>`;
+                }
+                
+                modalContent.innerHTML = modalHTML;
+            }
+            
+            function showError(message, details = null) {
+                // Format error message
+                let errorHTML = `<strong>Error:</strong> ${message}`;
+                
+                // Add validation details if provided
+                if (details && Array.isArray(details) && details.length > 0) {
+                    errorHTML += '<ul class="validation-errors">';
+                    details.forEach(err => {
+                        errorHTML += `<li><strong>${err.field}:</strong> ${err.message}</li>`;
+                    });
+                    errorHTML += '</ul>';
+                }
+                
+                errorMessage.innerHTML = errorHTML;
+                errorMessage.style.display = 'block';
+                
+                // Scroll to error message
+                errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>

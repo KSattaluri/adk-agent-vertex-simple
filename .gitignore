@@ -1,0 +1,47 @@
+# Environment variables
+*.env
+!*.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Test & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Firebase
+.firebase/
+
+# User-specific files (please review and uncomment if you want to track them)
+# CLIFFNOTES.md
+# claude.md
+
+# Documentation (please review and uncomment if you want to track it)
+# docs/
+
+**/.claude/settings.local.json
+
+# Session/Database files
+sessions.db
+*.sqlite
+*.sqlite3
+
+# Log files
+firestore_debug.log

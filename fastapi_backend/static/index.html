@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAR Answer Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f8fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        select, input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.4;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 4px;
+            font-size: 13px;
+            font-style: italic;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #logoutButton {
+            background-color: #e74c3c; /* A different color for logout */
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        #logoutButton:hover {
+            background-color: #c0392b;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1.5s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .star-answer {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .star-answer h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .star-component {
+            margin-bottom: 15px;
+        }
+        
+        .star-component label {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .feedback-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .feedback-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .rating {
+            font-size: 24px;
+            color: #f39c12;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .suggestions {
+            margin-top: 10px;
+        }
+        
+        .suggestions li {
+            margin-bottom: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table th {
+            background-color: #f2f2f2;
+        }
+        
+        .iteration-row {
+            cursor: pointer;
+        }
+        
+        .iteration-row:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .iteration-detail {
+            display: none;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .feedback-detail {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 4px;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>STAR Answer Generator</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="/static/history.html" style="text-decoration: none;"><button style="background-color: #2ecc71;">View History</button></a>
+                <a href="/logout" style="text-decoration: none;"><button id="logoutButton">Logout</button></a>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="form-section">
+            <form id="starForm">
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    <select id="role" name="role" required>
+                        <option value="">Select a role</option>
+                        <option value="Product Manager">Product Manager</option>
+                        <option value="Software Engineer">Software Engineer</option>
+                        <option value="Data Scientist">Data Scientist</option>
+                        <option value="UX Designer">UX Designer</option>
+                        <option value="Marketing Manager">Marketing Manager</option>
+                        <option value="Scrum Master">Scrum Master</option>
+                        <option value="Technical Program Manager">Technical Program Manager</option>
+                        <option value="Product Owner">Product Owner</option>
+                        <option value="Delivery Lead">Delivery Lead</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="industry">Industry:</label>
+                    <select id="industry" name="industry" required>
+                        <option value="">Select an industry</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Retail">Retail</option>
+                        <option value="Education">Education</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question">Interview Question:</label>
+                    <select id="question" name="question" required>
+                        <option value="">Select a question</option>
+                        <option value="Tell me about a time you solved a complex problem.">Tell me about a time you solved a complex problem.</option>
+                        <option value="Describe a situation where you had to work with a difficult team member.">Describe a situation where you had to work with a difficult team member.</option>
+                        <option value="Give an example of a time you had to make a difficult decision.">Give an example of a time you had to make a difficult decision.</option>
+                        <option value="Tell me about a time you failed and what you learned from it.">Tell me about a time you failed and what you learned from it.</option>
+                        <option value="Describe a project where you had to use your leadership skills.">Describe a project where you had to use your leadership skills.</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="resume">Resume/Background (Optional):</label>
+                    <textarea id="resume" name="resume" rows="4" placeholder="Paste your resume content or key background info here (optional)..."></textarea>
+                    <small style="color: #666;">Provide relevant experience to make your STAR answer more specific and authentic.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="jobDescription">Job Description (Optional):</label>
+                    <textarea id="jobDescription" name="jobDescription" rows="4" placeholder="Paste the job description or key requirements here (optional)..."></textarea>
+                    <small style="color: #666;">Help tailor the answer to the specific role requirements.</small>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" id="submitBtn">Generate STAR Answer</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div id="spinner"></div>
+            <p id="loadingMessage">Generating your STAR answer... This may take up to 30 seconds.</p>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <h2>Your STAR Answer</h2>
+            
+            <div class="star-answer" id="starAnswer">
+                <h3>STAR Response</h3>
+                <div class="star-component">
+                    <label>Situation:</label>
+                    <p id="situation"></p>
+                </div>
+                <div class="star-component">
+                    <label>Task:</label>
+                    <p id="task"></p>
+                </div>
+                <div class="star-component">
+                    <label>Action:</label>
+                    <p id="action"></p>
+                </div>
+                <div class="star-component">
+                    <label>Result:</label>
+                    <p id="result"></p>
+                </div>
+            </div>
+            
+            <div class="feedback-section" id="feedbackSection">
+                <h3>Feedback</h3>
+                <div class="rating">Rating: <span id="ratingValue">0.0</span>/5.0</div>
+                
+                <div id="detailedFeedback">
+                    <div id="structureFeedback"></div>
+                    <div id="relevanceFeedback"></div>
+                    <div id="specificityFeedback"></div>
+                    <div id="impactFeedback"></div>
+                </div>
+                
+                <div class="suggestions" id="suggestions">
+                    <h4>Suggestions for Improvement:</h4>
+                    <ul id="suggestionsList"></ul>
+                </div>
+            </div>
+
+            <div class="feedback-section" id="timingSection" style="display: none;">
+                <h3>Performance Analysis</h3>
+                <div id="timingDetails">
+                    <!-- Timing information will be displayed here -->
+                </div>
+            </div>
+            
+            <h3>Refinement History</h3>
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Iteration</th>
+                        <th>Rating</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <!-- Iteration rows will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const starForm = document.getElementById('starForm');
+            const loading = document.getElementById('loading');
+            const resultSection = document.getElementById('resultSection');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Check for URL parameters to pre-fill form
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleParam = urlParams.get('role');
+            const industryParam = urlParams.get('industry');
+            const questionParam = urlParams.get('question');
+            
+            // Set form values from URL parameters or defaults
+            document.getElementById('role').value = roleParam || 'Product Manager';
+            document.getElementById('industry').value = industryParam || 'Healthcare';
+            document.getElementById('question').value = questionParam || 'Tell me about a time you solved a complex problem.';
+            
+            // Clear URL parameters after setting form values (optional, for cleaner URL)
+            if (roleParam || industryParam || questionParam) {
+                // Replace the current URL without parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            starForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Clear previous results and errors
+                errorMessage.style.display = 'none';
+                resultSection.style.display = 'none';
+                
+                // Show loading spinner
+                loading.style.display = 'block';
+                
+                // Get form values
+                const role = document.getElementById('role').value;
+                const industry = document.getElementById('industry').value;
+                const question = document.getElementById('question').value;
+                const resume = document.getElementById('resume').value;
+                const jobDescription = document.getElementById('jobDescription').value;
+                
+                // Validate inputs
+                if (!role || !industry || !question) {
+                    showError('Please fill out all required fields.');
+                    loading.style.display = 'none';
+                    return;
+                }
+                
+                // Create payload
+                const payload = {
+                    role: role,
+                    industry: industry,
+                    question: question,
+                    resume: resume,
+                    job_description: jobDescription
+                };
+                
+                // Make streaming API call
+                makeStreamingRequest(payload);
+            });
+
+            function makeStreamingRequest(payload) {
+                const loadingMessage = document.getElementById('loadingMessage');
+
+                // Make initial POST to start the streaming
+                fetch('/api/chat/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    function readStream() {
+                        return reader.read().then(({ done, value }) => {
+                            if (done) {
+                                loading.style.display = 'none';
+                                return;
+                            }
+
+                            const chunk = decoder.decode(value);
+                            const lines = chunk.split('\n');
+
+                            for (const line of lines) {
+                                if (line.startsWith('data: ')) {
+                                    try {
+                                        const data = JSON.parse(line.slice(6));
+
+                                        if (data.type === 'status') {
+                                            // Update loading message with current stage
+                                            loadingMessage.textContent = data.message;
+                                        } else if (data.type === 'final') {
+                                            // Display final results
+                                            loading.style.display = 'none';
+                                            displayResults(data.data);
+                                        } else if (data.error) {
+                                            // Handle errors
+                                            loading.style.display = 'none';
+                                            showError(data.error);
+                                        }
+                                    } catch (e) {
+                                        console.log('Error parsing SSE data:', e);
+                                    }
+                                }
+                            }
+
+                            return readStream();
+                        });
+                    }
+
+                    return readStream();
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    showError('Error: ' + error.message);
+                });
+            }
+
+            function showError(message, details = null) {
+                // Format error message
+                let errorHTML = `<strong>Error:</strong> ${message}`;
+
+                // Add validation details if provided
+                if (details && Array.isArray(details) && details.length > 0) {
+                    errorHTML += '<ul class="validation-errors">';
+                    details.forEach(err => {
+                        errorHTML += `<li><strong>${err.field}:</strong> ${err.message}</li>`;
+                    });
+                    errorHTML += '</ul>';
+                }
+
+                errorMessage.innerHTML = errorHTML;
+                errorMessage.style.display = 'block';
+
+                // Scroll to error message
+                errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            function displayResults(data) {
+                // Display the result section
+                resultSection.style.display = 'block';
+                
+                // Check if there was an error
+                if (data.metadata && data.metadata.status && data.metadata.status.startsWith('ERROR')) {
+                    const errorMsg = data.metadata.error_message || 'An error occurred while processing your request.';
+                    const validationErrors = data.validation_errors || [];
+
+                    showError(errorMsg, validationErrors);
+                    return;
+                }
+                
+                // Process data based on structure - extract from iterations
+                let starAnswer = {};
+                let feedback = {};
+                let history = [];
+                
+                if (data.iterations && data.iterations.length > 0) {
+                    // Use iterations structure (the correct structure from the streaming response)
+                    history = data.iterations;
+                    
+                    // Use the best iteration from history
+                    const bestIteration = history.reduce((best, current) => {
+                        const bestRating = best.critique?.rating || 0;
+                        const currentRating = current.critique?.rating || 0;
+                        return currentRating > bestRating ? current : best;
+                    });
+                    
+                    starAnswer = bestIteration.starAnswer || {};
+                    feedback = bestIteration.critique || {};
+                } else if (data.finalResponse && data.finalResponse.iterations && data.finalResponse.iterations.length > 0) {
+                    // Fallback: Use finalResponse.iterations structure (for stored data)
+                    history = data.finalResponse.iterations;
+                    
+                    // Use the best iteration from history
+                    const bestIteration = history.reduce((best, current) => {
+                        const bestRating = best.critique?.rating || 0;
+                        const currentRating = current.critique?.rating || 0;
+                        return currentRating > bestRating ? current : best;
+                    });
+                    
+                    starAnswer = bestIteration.starAnswer || {};
+                    feedback = bestIteration.critique || {};
+                } else {
+                    // Fallback to direct fields from response
+                    starAnswer = data.starAnswer || {};
+                    feedback = data.feedback || {};
+                    history = data.history || [];
+                }
+                
+                // Display STAR answer
+                document.getElementById('situation').textContent = starAnswer.situation || 'No situation provided';
+                document.getElementById('task').textContent = starAnswer.task || 'No task provided';
+                document.getElementById('action').textContent = starAnswer.action || 'No action provided';
+                document.getElementById('result').textContent = starAnswer.result || 'No result provided';
+                
+                // Display feedback
+                document.getElementById('ratingValue').textContent = feedback.rating || '0.0';
+                
+                // Display detailed feedback - using consistent camelCase field names
+                const structureFeedback = document.getElementById('structureFeedback');
+                const relevanceFeedback = document.getElementById('relevanceFeedback');
+                const specificityFeedback = document.getElementById('specificityFeedback');
+                const impactFeedback = document.getElementById('impactFeedback');
+                
+                if (feedback.structureFeedback) {
+                    structureFeedback.innerHTML = '<p><strong>Structure:</strong> ' + feedback.structureFeedback + '</p>';
+                } else {
+                    structureFeedback.innerHTML = '';
+                }
+                
+                if (feedback.relevanceFeedback) {
+                    relevanceFeedback.innerHTML = '<p><strong>Relevance:</strong> ' + feedback.relevanceFeedback + '</p>';
+                } else {
+                    relevanceFeedback.innerHTML = '';
+                }
+                
+                if (feedback.specificityFeedback) {
+                    specificityFeedback.innerHTML = '<p><strong>Specificity:</strong> ' + feedback.specificityFeedback + '</p>';
+                } else {
+                    specificityFeedback.innerHTML = '';
+                }
+                
+                if (feedback.professionalImpactFeedback) {
+                    impactFeedback.innerHTML = '<p><strong>Professional Impact:</strong> ' + feedback.professionalImpactFeedback + '</p>';
+                } else {
+                    impactFeedback.innerHTML = '';
+                }
+                
+                // Display suggestions
+                const suggestionsList = document.getElementById('suggestionsList');
+                suggestionsList.innerHTML = '';
+                
+                if (feedback.suggestions && feedback.suggestions.length > 0) {
+                    feedback.suggestions.forEach(suggestion => {
+                        const li = document.createElement('li');
+                        li.textContent = suggestion;
+                        suggestionsList.appendChild(li);
+                    });
+                } else {
+                    suggestionsList.innerHTML = '<li>No suggestions provided</li>';
+                }
+                
+                // Display history
+                const historyTableBody = document.getElementById('historyTableBody');
+                historyTableBody.innerHTML = '';
+                
+                // Sort history in descending order (latest first) using iterationNumber
+                history.sort((a, b) => (b.iterationNumber || 0) - (a.iterationNumber || 0));
+                
+                history.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'iteration-row';
+                    
+                    const iterationCell = document.createElement('td');
+                    iterationCell.textContent = item.iterationNumber || 'N/A';
+                    
+                    const ratingCell = document.createElement('td');
+                    if (item.critique && item.critique.rating) {
+                        ratingCell.textContent = item.critique.rating + '/5.0';
+                    } else {
+                        ratingCell.textContent = 'N/A';
+                    }
+                    
+                    const detailsCell = document.createElement('td');
+                    const viewButton = document.createElement('button');
+                    viewButton.textContent = 'View Details';
+                    viewButton.style.backgroundColor = '#2ecc71';
+                    
+                    const detailDiv = document.createElement('div');
+                    detailDiv.className = 'iteration-detail';
+                    detailDiv.innerHTML = `
+                        <h4>STAR Response (Iteration ${item.iterationNumber || 'N/A'})</h4>
+                        <div><strong>Situation:</strong> ${item.starAnswer?.situation || 'Not available'}</div>
+                        <div><strong>Task:</strong> ${item.starAnswer?.task || 'Not available'}</div>
+                        <div><strong>Action:</strong> ${item.starAnswer?.action || 'Not available'}</div>
+                        <div><strong>Result:</strong> ${item.starAnswer?.result || 'Not available'}</div>
+                    `;
+                    
+                    // Add critique details if available
+                    if (item.critique) {
+                        const critiqueFeedback = document.createElement('div');
+                        critiqueFeedback.className = 'feedback-detail';
+                        critiqueFeedback.innerHTML = `
+                            <h4>Critique</h4>
+                            <div><strong>Rating:</strong> ${item.critique.rating || 'N/A'}/5.0</div>
+                        `;
+                        
+                        // Use consistent camelCase field names
+                        if (item.critique.structureFeedback) {
+                            critiqueFeedback.innerHTML += `<div><strong>Structure:</strong> ${item.critique.structureFeedback}</div>`;
+                        }
+                        
+                        if (item.critique.relevanceFeedback) {
+                            critiqueFeedback.innerHTML += `<div><strong>Relevance:</strong> ${item.critique.relevanceFeedback}</div>`;
+                        }
+                        
+                        if (item.critique.specificityFeedback) {
+                            critiqueFeedback.innerHTML += `<div><strong>Specificity:</strong> ${item.critique.specificityFeedback}</div>`;
+                        }
+                        
+                        if (item.critique.professionalImpactFeedback) {
+                            critiqueFeedback.innerHTML += `<div><strong>Professional Impact:</strong> ${item.critique.professionalImpactFeedback}</div>`;
+                        }
+                        
+                        if (item.critique.suggestions && item.critique.suggestions.length > 0) {
+                            const suggestionsList = document.createElement('div');
+                            suggestionsList.innerHTML = '<strong>Suggestions:</strong><ul>';
+                            
+                            item.critique.suggestions.forEach(suggestion => {
+                                suggestionsList.innerHTML += `<li>${suggestion}</li>`;
+                            });
+                            
+                            suggestionsList.innerHTML += '</ul>';
+                            critiqueFeedback.appendChild(suggestionsList);
+                        }
+                        
+                        detailDiv.appendChild(critiqueFeedback);
+                    }
+                    
+                    viewButton.addEventListener('click', function() {
+                        if (detailDiv.style.display === 'block') {
+                            detailDiv.style.display = 'none';
+                            viewButton.textContent = 'View Details';
+                        } else {
+                            detailDiv.style.display = 'block';
+                            viewButton.textContent = 'Hide Details';
+                        }
+                    });
+                    
+                    detailsCell.appendChild(viewButton);
+                    detailsCell.appendChild(detailDiv);
+                    
+                    row.appendChild(iterationCell);
+                    row.appendChild(ratingCell);
+                    row.appendChild(detailsCell);
+                    
+                    historyTableBody.appendChild(row);
+                });
+
+                // Display timing data if available - use correct path from streaming response
+                const performanceMetrics = data.performanceMetrics || data.finalResponse?.performanceMetrics || data.metadata?.timing_data;
+                if (performanceMetrics) {
+                    const timingSection = document.getElementById('timingSection');
+                    const timingDetails = document.getElementById('timingDetails');
+
+                    timingSection.style.display = 'block';
+
+                    let timingData = [];
+                    
+                    // Handle new structure (PerformanceMetrics)
+                    if (performanceMetrics.totalWorkflowTime !== undefined) {
+                        timingData.push(['total_workflow', performanceMetrics.totalWorkflowTime]);
+                        timingData.push(['generation', performanceMetrics.generationTime || 0]);
+                        
+                        if (performanceMetrics.critiqueTimes) {
+                            performanceMetrics.critiqueTimes.forEach((time, index) => {
+                                timingData.push([`critique_iteration_${index + 1}`, time]);
+                            });
+                        }
+                        
+                        if (performanceMetrics.refinementTimes) {
+                            performanceMetrics.refinementTimes.forEach((time, index) => {
+                                timingData.push([`refinement_iteration_${index + 1}`, time]);
+                            });
+                        }
+                    } else {
+                        // Handle old structure (timing_data object)
+                        timingData = Object.entries(performanceMetrics);
+                    }
+
+                    // Sort timing data by duration (descending)
+                    timingData.sort(([, a], [, b]) => b - a);
+
+                    let timingHTML = '<table style="width: 100%; margin-top: 10px;">';
+                    timingHTML += '<thead><tr><th>Operation</th><th>Time (seconds)</th><th>Percentage</th></tr></thead>';
+                    timingHTML += '<tbody>';
+
+                    // Calculate total time
+                    const totalTime = timingData.find(([key]) => key === 'total_workflow')?.[1] ||
+                                     timingData.reduce((sum, [, time]) => sum + time, 0);
+
+                    timingData.forEach(([operation, time]) => {
+                        const percentage = ((time / totalTime) * 100).toFixed(1);
+                        timingHTML += `<tr>
+                            <td>${operation.replace(/_/g, ' ')}</td>
+                            <td>${time.toFixed(3)}</td>
+                            <td>
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 100px; height: 20px; background-color: #ecf0f1; border-radius: 3px; margin-right: 5px;">
+                                        <div style="width: ${percentage}%; height: 100%; background-color: #3498db; border-radius: 3px;"></div>
+                                    </div>
+                                    ${percentage}%
+                                </div>
+                            </td>
+                        </tr>`;
+                    });
+
+                    timingHTML += '</tbody></table>';
+                    timingDetails.innerHTML = timingHTML;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

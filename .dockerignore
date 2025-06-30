@@ -1,0 +1,40 @@
+# Version control
+.git
+.gitignore
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.example
+.flaskenv
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+.claude/
+
+# Project specific folders not needed for the agent image
+backend/
+docs/
+extras/
+mockups/
+public/
+agent_deploy/
+
+# Specific files not needed for the agent image
+*.md
+poetry.lock
+pyproject.toml
+# Exclude the root main.py if it's only for local agent testing
+# and cloud_run_app.py is the true entry point for the container
+# main.py 
+# ^ Uncomment the line above if your root main.py is NOT needed in the image
+
+# Other
+local_settings.py
+sessions.db
+*.log
